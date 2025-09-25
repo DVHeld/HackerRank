@@ -21,7 +21,7 @@ def validate(user_input: list[str]) -> None:
     try:
         n: int = int(user_input[1])
     except Exception as e:
-        raise TypeError(f"Expected an integer as the second input: {e}")
+        raise TypeError(f"Expected an integer as the second input: {e}") from e
     if len(user_input[0]) < n:
         raise ValueError("The string's length must be greater or equal to the combination's length.")
 
