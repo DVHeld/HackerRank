@@ -308,8 +308,12 @@ def count_substring_safe(
         logger.warning("Validation failed: %s. Returning default value.", e)
         return default
 
-    except Exception as e:
-        logger.error("Unexpected error in count_substring_safe: %s. Returning default value.", e, exc_info=True)
+    except Exception as e: # pylint: disable=broad-exception-caught
+        logger.error(
+            "Unexpected error in count_substring_safe: %s. Returning default value.",
+            e,
+            exc_info=True
+        )
         return default
 
 def count_substring_batch(
