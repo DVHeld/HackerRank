@@ -1,7 +1,33 @@
 """Find a string
 
     https://www.hackerrank.com/challenges/find-a-string/problem
+
+    Substring counting module with production-grade validation, error handling and functionality.
+
+    This module provides robust overlapping substring counting functionality with substring location, comprehensive
+    input validation, batch processing and fault-tolerant variants.
+
+    Classes:
+        SubstringCountError: Base exception for substring counting errors.
+        ValidationError: Raised when input validation fails.
+
+    Functions:
+        count_substring: Counts the amount of occurrences of substring in string, including overlapping matches.
+        count_substring_safe: Safe version that returns default value on error instead of raising.
+        count_substring_batch: Count substring in multiple strings (batch processing).
+        find_all_positions: Returns a list of all the positions at which the substring is found within the string, including overlapping ones.
+        validate_inputs: Validates user inputs for substring counting.
     """
+
+__all__ = [
+    'SubstringCountError',
+    'ValidationError',
+    'count_substring',
+    'count_substring_safe',
+    'count_substring_batch',
+    'find_all_positions',
+    'validate_inputs'
+]
 
 import logging
 from typing import Optional
@@ -26,14 +52,14 @@ def validate_inputs(
     require_ascii: bool = True,
     allow_empty_substring: bool = False,
     /) -> None:
-    """Validates user inputs according to the problem's restrictions.
+    """Validates user inputs for substring counting.
 
     Args:
         string (str): The string to check in.
         sub_string (str): The string to look for.
         max_len (int, optional): The maximum allowed string length. Defaults to 200.
-        require_ascii (bool, optional): Wether to only allow ascii characters. Defaults to True.
-        allow_empty_substring (bool, optional): Wether to allow an empty substring. Defaults to False.
+        require_ascii (bool, optional): Whether to only allow ascii characters. Defaults to True.
+        allow_empty_substring (bool, optional): Whether to allow an empty substring. Defaults to False.
 
     Raises:
         TypeError: If string is not of type str.
@@ -137,7 +163,7 @@ def validate_inputs(
                         f"Consider setting require_ascii to False."
                         ) from e
 
-    logger.debug("Input validation passed: str_len={%s}, substr_len={%s}.", str_len, substr_len)
+    logger.debug("Input validation passed: str_len=%s, substr_len=%s.", str_len, substr_len)
 
 def find_all_positions(
     string: str,
@@ -153,15 +179,28 @@ def find_all_positions(
         string (str): The string to check in.
         sub_string (str): The string to look for.
         max_len (int, optional): The maximum allowed string length. Defaults to 200.
-        require_ascii (bool, optional): Wether to only allow ascii characters. Defaults to True.
-        allow_empty_substring (bool, optional): Wether to allow an empty substring. Defaults to False.
-        validate (bool, optional): Wether to do validation checks. Defaults to True.
+        require_ascii (bool, optional): Whether to only allow ascii characters. Defaults to True.
+        allow_empty_substring (bool, optional): Whether to allow an empty substring. Defaults to False.
+        validate (bool, optional): Whether to do validation checks. Defaults to True.
 
     Raises:
         TypeError: If validate is not of type bool.
+        ValidationError: If validation constraints are violated.
 
     Returns:
         list[int]: A list containing the positions of every occurrence of substring in the string.
+    
+    Examples:
+        >>> find_all_positions("AAAA", "AA")
+        [0, 1, 2]
+        >>> find_all_positions("ABCDCDC", "CDC")
+        [2, 4]
+
+    Notes:
+        - Returns 0-based indices.
+        - Includes overlapping matches.
+        - Time complexity: O(n*m) where n = len(string) and m = len(sub_string).
+        - Space complexity: O(k) where k = number of matches. 
     """
 
     if not isinstance(validate, bool):
@@ -170,21 +209,23 @@ def find_all_positions(
             f"Received value: {repr(validate)}."
             )
 
-    validate_inputs(
-        string,
-        sub_string,
-        max_len,
-        require_ascii,
-        allow_empty_substring
-    )
+    if validate:
+        validate_inputs(
+            string,
+            sub_string,
+            max_len,
+            require_ascii,
+            allow_empty_substring
+        )
+
     substr_len: int = len(sub_string)
     str_len: int = len(string)
 
     logger.debug("Started search for substring %s in string of length %s.",
-        repr(sub_string[:50]) + '...' if len(sub_string) > 50 else '',
+        repr(sub_string[:50]) + ('...' if len(sub_string) > 50 else ''),
         str_len
     )
-    positions: list[int] = [index for index in range(len(string - substr_len + 1)) if sub_string == string[index:index + substr_len]]
+    positions: list[int] = [index for index in range(len(string) - substr_len + 1) if sub_string == string[index:index + substr_len]]
 
     occurrences: int = len(positions)
     logger.debug(
@@ -214,20 +255,38 @@ def count_substring_safe(
         sub_string (Optional[str]): The string to look for.
         default (int, optional): The default value to return. Defaults to 0.
         max_len (int, optional): The maximum allowed string length. Defaults to 200.
-        require_ascii (bool, optional): Wether to only allow ascii characters. Defaults to True.
-        allow_empty_substring (bool, optional): Wether to allow an empty substring. Defaults to False.
-        validate (bool, optional): Wether to do validation checks. Defaults to True.
+        require_ascii (bool, optional): Whether to only allow ascii characters. Defaults to True.
+        allow_empty_substring (bool, optional): Whether to allow an empty substring. Defaults to False.
+        validate (bool, optional): Whether to do validation checks. Defaults to True.
 
     Raises:
-        TypeError: If default is not of type bool.
+        TypeError: If default is not of type int.
 
     Returns:
         int: The amount of occurrences, or default value if validation fails.
+
+    Notes:
+        - Case-sensitive.
+        - Counts overlapping matches.
+        - Never raises exceptions (except for invalid default parameter).
+        - Logs warnings for validation failures.
+        - Logs errors with stack traces for unexpected failures.
+        - Useful for data pipelines where robustness is critical.
+        - Time complexity O(n*m) where n = len(string) and m = len(sub_string)
+        - Space complexity O(1)
+
+    Examples:
+        >>> count_substring("AAAA", "AA")
+        3
+        >>> count_substring("", "AA")
+        0
+        >>> count_substring("test", None, default=-1)
+        -1
     """
 
     if not isinstance(default, int):
         raise TypeError(
-            f"Expected default to be of type bool, got {type(default).__name__}. "
+            f"Expected default to be of type int, got {type(default).__name__}. "
             f"Received value: {repr(default)}."
             )
 
@@ -267,11 +326,11 @@ def count_substring_batch(
     Args:
         string_list (list[str]): The list of strings to check in.
         sub_string (str): The string to look for.
-        skip_invalid (bool, optional): Wether to skip invalid strings. Defaults to True.
+        skip_invalid (bool, optional): Whether to skip invalid strings. Defaults to True.
         max_len (int, optional): The maximum allowed string length. Defaults to 200.
-        require_ascii (bool, optional): Wether to only allow ascii characters. Defaults to True.
-        allow_empty_substring (bool, optional): Wether to allow an empty substring. Defaults to False.
-        validate (bool, optional): Wether to do validation checks. Defaults to True.
+        require_ascii (bool, optional): Whether to only allow ascii characters. Defaults to True.
+        allow_empty_substring (bool, optional): Whether to allow an empty substring. Defaults to False.
+        validate (bool, optional): Whether to do validation checks. Defaults to True.
 
     Raises:
         TypeError: If string_list is not of type list.
@@ -342,16 +401,27 @@ def count_substring(
     /) -> int:
     """Counts the amount of occurrences of substring in string, including overlapping matches.
 
+    It sequentially scans through the string, checking for matches. 
+
     Args:
         string (str): The string to check in.
         sub_string (str): The string to look for.
         max_len (int, optional): The maximum allowed string length. Defaults to 200.
-        require_ascii (bool, optional): Wether to only allow ascii characters. Defaults to True.
-        allow_empty_substring (bool, optional): Wether to allow an empty substring. Defaults to False.
-        validate (bool, optional): Wether to do validation checks. Defaults to True.
+        require_ascii (bool, optional): Whether to only allow ascii characters. Defaults to True.
+        allow_empty_substring (bool, optional): Whether to allow an empty substring. Defaults to False.
+        validate (bool, optional): Whether to do validation checks. Defaults to True.
 
     Returns:
         int: The match count.
+
+    Raises:
+        TypeError: If validate is not of type bool.
+
+    Notes:
+        - Case-sensitive.
+        - Counts overlapping matches.
+        - Time complexity O(n*m) where n = len(string) and m = len(sub_string)
+        - Space complexity O(1)
 
     Examples:
         >>> count_substring("AAB", "AA")
@@ -360,8 +430,16 @@ def count_substring(
         3
         >>> count_substring("ABCDCDC", "CDC")
         2
+        >>> count_substring("ABC", "x")
+        0
         >>> count_substring("", "AA") # Raises ValidationError
     """
+
+    if not isinstance(validate, bool):
+        raise TypeError(
+            f"validate must be of type bool, got {type(validate).__name__}. "
+            f"Received value: {repr(validate)}."
+            )
 
     if validate:
         validate_inputs(
