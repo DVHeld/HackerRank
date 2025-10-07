@@ -9,7 +9,7 @@
     sizes and to validate the inputs needed for this.
 
     Classes:
-        AlphabetRangoliError: Base exception for string checking errors.
+        AlphabetRangoliError: Base exception for Alphabet Rangoli building errors.
         AlphabetRangoliValidationError: Raised when input validation fails.
 
     Functions:
