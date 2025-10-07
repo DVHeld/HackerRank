@@ -148,8 +148,8 @@ def validate_inputs(
                     raise ValidationError(
                         f"string contains forbidden non-ascii character '{repr(character)}' "
                         f"(Unicode: U+{ord(character):04X}) at position {index}. "
-                        f"Only ASCII characters are allowed. "
-                        f"Consider setting require_ascii to False."
+                        "Only ASCII characters are allowed. "
+                        "Consider setting require_ascii to False."
                         ) from e
         try:
             sub_string.encode('ascii')
